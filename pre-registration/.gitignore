@@ -30,3 +30,4 @@ test.txt
 **/*.iml
 **/META-INF/
 .vscode
+/pre-registration-application-service/src/main/resources/application-local.properties

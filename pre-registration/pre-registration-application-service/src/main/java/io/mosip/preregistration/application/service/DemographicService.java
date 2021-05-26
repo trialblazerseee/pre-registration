@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import lombok.SneakyThrows;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -299,6 +301,7 @@ public class DemographicService implements DemographicServiceIntf {
 				"Pre Registration start time : " + DateUtils.getUTCCurrentDateTimeString());
 		MainResponseDTO<DemographicCreateResponseDTO> mainResponseDTO = null;
 		boolean isSuccess = false;
+		String genderInformation = null;
 		try {
 			log.info("sessionId", "idType", "id", "Get Schema from syncdata called");
 			String idSchema = serviceUtil.getSchema();
@@ -315,6 +318,11 @@ public class DemographicService implements DemographicServiceIntf {
 			log.info("sessionId", "idType", "id",
 					"JSON validator end time : " + DateUtils.getUTCCurrentDateTimeString());
 			log.info("sessionId", "idType", "id",
+					"Fetch Gender Information start time : " + DateUtils.getUTCCurrentDateTimeString());
+			genderInformation = getGenderInformationFromJSONObject(demographicRequest.getDemographicDetails());
+			log.info("sessionId", "idType", "id",
+					"Fetch Gender Information end time : " + DateUtils.getUTCCurrentDateTimeString());
+			log.info("sessionId", "idType", "id",
 					"Pre ID generation start time : " + DateUtils.getUTCCurrentDateTimeString());
 			// String preId = pridGenerator.generateId();
 			String preId = serviceUtil.generateId();
@@ -329,6 +337,8 @@ public class DemographicService implements DemographicServiceIntf {
 			mainResponseDTO.setResponse(res);
 			isSuccess = true;
 			mainResponseDTO.setResponsetime(serviceUtil.getCurrentResponseTime());
+
+
 			log.info("sessionId", "idType", "id",
 					"Pre Registration end time : " + DateUtils.getUTCCurrentDateTimeString());
 		} catch (HttpServerErrorException | HttpClientErrorException e) {
@@ -347,7 +357,7 @@ public class DemographicService implements DemographicServiceIntf {
 
 			if (isSuccess) {
 				setAuditValues(EventId.PRE_407.toString(), EventName.PERSIST.toString(), EventType.BUSINESS.toString(),
-						"Pre-Registration data is sucessfully saved in the demographic table",
+						"Pre-Registration data is sucessfully saved in the demographic table " + genderInformation,
 						AuditLogVariables.NO_ID.toString(), authUserDetails().getUserId(),
 						authUserDetails().getUsername());
 			} else {
@@ -1033,4 +1043,23 @@ public class DemographicService implements DemographicServiceIntf {
 
 	}
 
+	private String getGenderInformationFromJSONObject(JSONObject jsonObject) throws ParseException {
+		JSONParser parser = new JSONParser();
+		JSONObject object = (JSONObject) parser.parse(jsonObject.get("request").toString());
+		object = (JSONObject) parser.parse(object.get("demographicDetails").toString());
+		object = (JSONObject) parser.parse(object.get("identity").toString());
+
+		JSONArray array = (JSONArray) parser.parse(object.get("gender").toString());
+
+		String genderPrintValue = "Gender [";
+		for (int i = 0; i < array.size(); i++ ) {
+			JSONObject obj = (JSONObject) array.get(i);
+			String value1 = obj.get("value").toString();
+
+			genderPrintValue += "(Language : " + obj.get("language").toString() + " , Value : " + obj.get("value").toString() + " ),";
+		}
+		genderPrintValue += "]";
+
+		return genderPrintValue;
+	}
 }
