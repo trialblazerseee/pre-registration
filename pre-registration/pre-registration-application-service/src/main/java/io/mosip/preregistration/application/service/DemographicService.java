@@ -2,12 +2,7 @@
 package io.mosip.preregistration.application.service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -1043,23 +1038,18 @@ public class DemographicService implements DemographicServiceIntf {
 
 	}
 
-	private String getGenderInformationFromJSONObject(JSONObject jsonObject) throws ParseException {
-		JSONParser parser = new JSONParser();
-		JSONObject object = (JSONObject) parser.parse(jsonObject.get("request").toString());
-		object = (JSONObject) parser.parse(object.get("demographicDetails").toString());
-		object = (JSONObject) parser.parse(object.get("identity").toString());
+	private String getGenderInformationFromJSONObject(JSONObject jsonObject) {
+			JSONParser parser = new JSONParser();
+			LinkedHashMap identityMap = (LinkedHashMap) jsonObject.get("identity");
 
-		JSONArray array = (JSONArray) parser.parse(object.get("gender").toString());
-
-		String genderPrintValue = "Gender [";
-		for (int i = 0; i < array.size(); i++ ) {
-			JSONObject obj = (JSONObject) array.get(i);
-			String value1 = obj.get("value").toString();
-
-			genderPrintValue += "(Language : " + obj.get("language").toString() + " , Value : " + obj.get("value").toString() + " ),";
-		}
-		genderPrintValue += "]";
-
-		return genderPrintValue;
+			ArrayList<LinkedHashMap<String, Object>> genderList = (ArrayList<LinkedHashMap<String, Object>>) identityMap.get("gender");
+			String genderPrintValue = "Gender [";
+			for (LinkedHashMap<String, Object> genderMap : genderList) {
+				String language = (String) genderMap.get("language");
+				String value = (String) genderMap.get("value");
+				genderPrintValue += "(Language : " + language + " , Value : " + value + " ),";
+			}
+			genderPrintValue += "]";
+			return genderPrintValue;
 	}
 }
